@@ -7,17 +7,20 @@ import { AuthContext } from './context/AuthProvider'
 const App = () => {
 
   const [user, setUser] = useState(null)
-  const [loggedInUserData, setLoggedInUserData] = useState(null)
-  const { authData } = useContext(AuthContext)
+  const { authData, refreshUserData } = useContext(AuthContext)
 
+
+  const loggedInUser = JSON.parse(localStorage.getItem('loggedInUser'))
+  
   useEffect(()=>{
-      const loggedInUser = localStorage.getItem("loggedInUser")
       if(loggedInUser){
-        const userData = JSON.parse(loggedInUser)
+        const userData = loggedInUser
         setUser(userData.role)
-        setLoggedInUserData(userData.data)
       }
   },[])
+  const loggedInUserData = authData && loggedInUser?.role === 'employee'
+  ? authData.employees.find(e => e.email === loggedInUser.data.email)
+  : authData?.admin?.find(a => a.email === loggedInUser?.data.email)
   
   
   const handleLogin =(email,password)=>{
@@ -25,7 +28,6 @@ const App = () => {
       const admin = authData.admin.find(e=>email == e.email && password == e.password)
       if(admin){
         setUser('admin')
-        setLoggedInUserData(admin)
         localStorage.setItem('loggedInUser',JSON.stringify({role:'admin',data:admin}))
         return;
       }
@@ -33,8 +35,8 @@ const App = () => {
       const employee = authData.employees.find(e=>email == e.email && password == e.password)
       if(employee){
         setUser('employee')
-        setLoggedInUserData(employee)
         localStorage.setItem('loggedInUser',JSON.stringify({role:'employee',data:employee}))  
+        
         return;
       }
     } 
@@ -44,7 +46,7 @@ const App = () => {
   const logOut=()=>{
     localStorage.removeItem('loggedInUser')
     setUser(null)
-    setLoggedInUserData(null)
+    refreshUserData()
   }
   
   return (
